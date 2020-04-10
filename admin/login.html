@@ -15,6 +15,8 @@
   <script src="./libs/jquery-1.12.4.min.js"></script>
   <!-- 引入bootstrap的js文件 -->
   <script src="./libs/bootstrap/js/bootstrap.min.js"></script>
+  <!-- 引入http.js文件 -->
+  <script src="./libs/http.js"></script>
 </head>
 
 <body>
@@ -38,6 +40,64 @@
     </div>
   </div>
 
+  <!-- 模态框 -->
+  <div class="modal fade" tabindex="-1" id="myModal" role="dialog">
+    <div class="modal-dialog" role="document">
+      <div class="modal-content">
+        <div class="modal-header">
+          <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span
+              aria-hidden="true">&times;</span></button>
+          <h4 class="modal-title">温馨提示</h4>
+        </div>
+        <div class="modal-body">
+          <p>One fine body&hellip;</p>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-default" data-dismiss="modal">确定</button>
+        </div>
+      </div><!-- /.modal-content -->
+    </div><!-- /.modal-dialog -->
+  </div><!-- /.modal -->
+  <script>
+    $(function () {
+      $('.input_sub').on('click', function (e) {
+        e.preventDefault();
+        let userName = $('.input_txt').val().trim();
+        let userPassword = $('.input_pass').val().trim();
+        if (userPassword == '' || userName == '') {
+          console.log(1);
+          $('#myModal .modal-body>p').text('账号或者密码不允许为空哦!!');
+          $('#myModal').modal();
+          return ;
+        }
+        $.ajax({
+          type: 'post',
+          // url: 'http://localhost:8080/api/v1/admin/user/login',
+          // 引入http.js文件后,我们就可以通过暴露出来的接口来获得url啦,就不用在基地址改变后再一个一个网页的去修改url啦
+          url:BigNew.user_login,
+          data: {
+            username: userName,
+            password: userPassword
+          },
+          success: function (getData) {
+            console.log(getData);
+            if (getData.code == 200) {
+              $('#myModal .modal-body>p').text('登陆成功!!');
+              $('#myModal').modal();
+              $('#myModal').on('hide.bs.modal', function (e) {
+                localStorage.setItem('token', getData.token);
+                location = './index.html';
+              })
+            } else {
+              $('#myModal .modal-body>p').text('账号或者密码不匹配!!');
+              $('#myModal').modal();
+            }
+          }
+        });
+      })
+    })
+
+  </script>
 </body>
 
 </html>
