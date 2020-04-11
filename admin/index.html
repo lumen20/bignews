@@ -144,12 +144,12 @@
             $('.level01').on('click', function () {
                 $(this).addClass('active').siblings().removeClass('active');
                 if ($(this).next().attr('bs') == 1) {
+                    $(this).find('b').toggleClass('rotate0');
                     $('.level02').slideDown(1000);
-                    $('.levlevel02el01:eq(1)').find('b').toggleClass('rotate0');
                     $('.level02').attr('bs', 2);
                 } else if ($(this).next().attr('bs') == 2) {
+                    $(this).find('b').toggleClass('rotate0');
                     $('.level02').slideUp(1000);
-                    $('.level01:eq(1)').find('b').toggleClass('rotate0');
                     $('.level02').attr('bs', 1);
                 }
             });
