@@ -11,6 +11,7 @@
     <link rel="stylesheet" href="css/iconfont.css">
     <link rel="stylesheet" href="css/main.css">
     <script src="./libs/jquery-1.12.4.min.js"></script>
+    <script src="./libs/http.js"></script>
 
 </head>
 
@@ -68,6 +69,75 @@
             </form>
         </div>
     </div>
+    <script>
+        $(function () {
+            // 进入用户页面就开始调用接口吧用户信息显示在相应的文本框内
+            function backData() {
+                $.ajax({
+                    type: 'get',
+                    url: BigNew.user_detail,
+                    success: function (getData) {
+                        console.log(getData);
+                        for (let key in getData.data) {
+                            console.log(key);
+                            $('input.' + key).val(getData.data[key]);
+                        }
+                        $('.user_pic').attr('src', getData.data.userPic);
+                    }
+                });
+            }
+            backData();
+
+            // 图片预览
+            $('#exampleInputFile').on('change', function () {
+                let file1 = this.files[0];
+                let url = URL.createObjectURL(file1);
+                console.log(url);
+
+                $('.user_pic').attr('src', url);
+            })
+
+            // 用户修改信息
+            $('.btn-edit').on('click', function (e) {
+                e.preventDefault();
+                // console.log(1);
+                let getFormData = document.getElementById('form');
+                let fd = new FormData(getFormData);
+                console.log(fd);
+                $.ajax({
+                    type: 'post',
+                    url: BigNew.user_edit,
+                    data: fd,
+                    contentType: false,
+                    processData: false,
+                    success: function (getData) {
+                        console.log(getData);
+                        if (getData.code == 200) {
+                            alert('修改成功');
+
+                            // 重新调用接口获取index页面的数据并更新
+                            $.ajax({
+                                type: 'get',
+                                // url: 'http://localhost:8080/api/v1/admin/user/info',
+                                url: BigNew.user_info,
+                                headers: {
+                                    Authorization: localStorage.getItem('token')
+                                },
+                                success: function (getData) {
+                                    console.log(getData);
+                                    parent.$('.user_info>span>i').text(getData.data.nickname);
+                                    parent.$('.user_info>img').attr('src', getData.data.userPic);
+                                    parent.$('.user_center_link>img').attr('src', getData.data.userPic);
+                                }
+                            });
+                        } else {
+                            alert('哦,好像出问题了');
+                        }
+                    }
+                });
+            })
+        })
+    </script>
 </body>
 
 </html>
