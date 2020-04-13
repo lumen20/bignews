@@ -72,6 +72,200 @@
             </div>
         </div>
     </div>
+    <!-- 分页插件html -->
+    <div class="row text-center">
+        <ul id="pagination" class="pagination-sm"></ul>
+        <p>没有数据!!!!!!!!</p>
+    </div>
+    <!-- 这个是模板插件 -->
+    <script src="./libs/http.js"></script>
+    <!-- 这个是分页插件 -->
+    <script src="../twbs-pagination-1.4.2/jquery.twbsPagination.js"></script>
+    <script id="tempLB" type="text/html">
+        <option value="">所有分类</option>
+        {{each data v}}
+        <option value="{{v.id}}">{{v.name}}</option>
+        {{/each}}
+    </script>
+    <script id="tempWZ" type="text/html">
+        {{each data.data v}}
+        <tr>
+            <td>{{v.title}}</td>
+            <td>{{v.author}}</td>
+            <td>{{v.category}}</td>
+            <td class="text-center">{{v.date}}</td>
+            <td class="text-center">{{v.state}}</td>
+            <td class="text-center">
+                <a href="article_edit.html" class="btn btn-default btn-xs">编辑</a>
+                <a href="javascript:void(0);" class="btn btn-danger btn-xs delete">删除</a>
+            </td>
+        </tr>
+        {{/each}}
+    </script>
+
+    <script>
+        // 根据老师写的封装的代码
+        $(function () {
+            //页面一加载就需要渲染所有文章类别
+            $.ajax({
+                type: 'get',
+                url: BigNew.category_list,
+                dataType: 'json',
+                success: function (getData) {
+                    // console.log(getData);
+                    if (getData.code == 200) {
+                        $('#selCategory').html(template('tempLB', getData));
+                    }
+                }
+            });
+
+            // 页面一加载就默认渲染所有的文章
+            function backData(mypage,callback) {
+                $.ajax({
+                    type: 'get',
+                    url: BigNew.article_query,
+                    data: {
+                        type: $('#selCategory').val().trim(), //文章类型id，可以为空，为空返回所有类型文章
+                        state: $('#selStatus').val().trim(),//文章状态，草稿 ，已发布,为空返回所有状态文章
+                        page: mypage,//当前页，为空返回第1页
+                        perpage: 6,//每页显示条数，为空默认每页6条
+                    },
+                    success: function (getData) {
+                        console.log(getData);
+                        if (getData.code == 200) {
+                            $('tbody').html(template('tempWZ', getData));
+
+                            // 额外的事情,判断响应回来的有没有数据
+                            if(getData.data.data.length != 0 && callback != null){
+                                //有数据
+                                $('#pagination').show().next('p').hide();
+                                //把获取回来的数据在调用callback的时候作为实参传递
+                                callback(getData);
+                            }else if (getData.data.data.length == 0){
+                                $('#pagination').hide().next('p').show();
+                            }
+                         }
+                    }
+                });
+            }
+
+            //二:一进到页面,发送ajax请求,获取默认的文章类别/文章状态 下的所有文章. 
+            backData(1, function (getData) {
+                //分页插件的方法. 
+                $('#pagination').twbsPagination({
+                    totalPages: getData.data.totalPage, //总页数
+                    visiblePages: 7, //最大的可见页数
+                    first: '首页',
+                    prev: '上一页',
+                    next: '下一页',
+                    last: '尾页',
+                    //页码点击的回调函数事件
+                    onPageClick: function (event, page) {
+                        //console.log(page); //是当前点击的页码数,比如第5页
+                        //重新发送ajax请求,把当前点击的这个页码传进去. 
+                        backData(page, null); //调用我们自己封装的方法
+                    }
+                });
+            });
+
+             //三:点击筛选按钮,获取符合条件 的文章们,渲染到页面上. 
+             $('#btnSearch').on('click', function (e) {
+                e.preventDefault(); //阻止默认的提交行为
+                //发送ajax请求
+                backData(1, function (getData) {
+                    //点击筛选按钮,由于改变了筛选条件,所以筛选出来的数据总页码会发生改变. 
+                    //所以要根据新的总页数, 来重新绘制 分页结构. 
+                    $('#pagination').twbsPagination('changeTotalPages', getData.data.totalPage, 1);
+                })
+            })
+        })
+
+
+
+
+// //我写的没有封装的代码
+    // $(function () {
+    // //页面一加载就需要渲染所有文章类别
+    // $.ajax({
+    // type: 'get',
+    // url: BigNew.category_list,
+    // dataType: 'json',
+    // success: function (getData) {
+    // // console.log(getData);
+    // if (getData.code == 200) {
+    // $('#selCategory').html(template('tempLB', getData));
+    // }
+    // }
+    // });
+    // //页面一加载默认渲染所有的文章
+    // $.ajax({
+    // type: 'get',
+    // url: BigNew.article_query,
+    // data: {
+    // type: $('#selCategory').val().trim(), //文章类型id，可以为空，为空返回所有类型文章
+    // state: $('#selStatus').val().trim(),//文章状态，草稿 ，已发布,为空返回所有状态文章
+    // page: 1,//当前页，为空返回第1页
+    // perpage: 6,//每页显示条数，为空默认每页6条
+    // },
+    // success: function (getData) {
+    // console.log(getData);
+    // if (getData.code == 200) {
+    // $('tbody').html(template('tempWZ', getData));
+    // // 查询完了以后,添加分页功能
+    // $('#pagination').twbsPagination({
+    // totalPages: getData.data.totalPage,
+    // visiblePages: 10,
+    // first: '第一页',
+    // prev: '上一页',
+    // next: '下一页',
+    // last: '最后一页',
+    // onPageClick: function (event, page) {
+    // console.info(page + ' (from options)');
+    // $.ajax({
+    // type: 'get',
+    // url: BigNew.article_query,
+    // data: {
+    // type: $('#selCategory').val().trim(), //文章类型id，可以为空，为空返回所有类型文章
+    // state: $('#selStatus').val().trim(),//文章状态，草稿 ，已发布,为空返回所有状态文章
+    // page: page,//当前页，为空返回第1页
+    // perpage: 6,//每页显示条数，为空默认每页6条
+    // },
+    // success: function (getData) {
+    // if (getData.code == 200) {
+    // $('tbody').html(template('tempWZ', getData));
+    // }
+    // }
+    // });
+    // }
+    // }).on('page', function (event, page) {
+    // console.info(page + ' (from event listening)');
+    // });
+    // }
+    // }
+    // });
+    // // 点击筛选按钮根据文章分类与文章状态筛选文章
+    // $('#btnSearch').on('click', function (e) {
+    // e.preventDefault();
+    // $.ajax({
+    // type: 'get',
+    // url: BigNew.article_query,
+    // data: {
+    // type: $('#selCategory').val().trim(), //文章类型id，可以为空，为空返回所有类型文章
+    // state: $('#selStatus').val().trim(),//文章状态，草稿 ，已发布,为空返回所有状态文章
+    // page: 1,//当前页，为空返回第1页
+    // perpage: 6,//每页显示条数，为空默认每页6条
+    // },
+    // success: function (getData) {
+    // console.log(getData);
+    // if (getData.code == 200) {
+    // $('tbody').html(template('tempWZ', getData));
+    // $('#pagination').twbsPagination('changeTotalPages',getData.data.totalPage, 1);
+    // }
+    // }
+    // });
+    // });
+    // })
+    </script>
 </body>
 
 </html>
